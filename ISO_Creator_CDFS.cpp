@@ -1,4 +1,6 @@
 #include "ISO_Creator_CDFS.h"
+#include <stdio.h>
+
 bool ISOCreatorCDFS::WriteSystemArea(FILE * ISOFileOut, const unsigned char(&BlockBuffer)[CDFS_LOGICAL_BLOCK_SIZE]) {
     if (!ISOFileOut || !BlockBuffer) return false;
     for (unsigned int SysAreaCount = 0; SysAreaCount < CDFS_SYSTEM_AREA_BLOCK_COUNT; ++SysAreaCount)
@@ -77,15 +79,15 @@ bool ISOCreatorCDFS::WriteVolumeDirectory(FILE* ISOFileOut, uint8_t RecordLength
     VolumeDirectory.RecordLength = RecordLength;
     VolumeDirectory.ExtAttrRecordLength = ExtAttrRecordLength;
     VolumeDirectory.LBALE = LBA;
-    VolumeDirectory.LBABE = _byteswap_ulong(LBA);
+    VolumeDirectory.LBABE = __builtin_bswap32(LBA);
     VolumeDirectory.DataLengthLE = DataLength;
-    VolumeDirectory.DataLengthBE = _byteswap_ulong(DataLength);
+    VolumeDirectory.DataLengthBE = __builtin_bswap32(DataLength);
     memcpy(&VolumeDirectory.RecordingDate, RecordingDate, 7);
     VolumeDirectory.FileFlags = FileFlags;
     VolumeDirectory.FileUnitSize = FileUnitSize;
     VolumeDirectory.InterleaveGapSize = InterleaveGapSize;
     VolumeDirectory.VolumeSequenceNumberLE = VolumeSequenceNumber;
-    VolumeDirectory.VolumeSequenceNumberBE = _byteswap_ushort(VolumeSequenceNumber);
+    VolumeDirectory.VolumeSequenceNumberBE = __builtin_bswap16(VolumeSequenceNumber);
     VolumeDirectory.LengthofIdentifier = LengthofIdentifier;
     return WriteVolumeDirectory(ISOFileOut, &VolumeDirectory);
 }
@@ -138,7 +140,8 @@ bool ISOCreatorCDFS::CreateSingleFileISO(const char * szISOFileName, const char 
     if (!szISOFileName || !szVolumeLabel) return false;
     if (strlen(szISOFileName) == 0 || strlen(szVolumeLabel) == 0 || strlen(szVolumeLabel) > 16) return false;
 
-    if (fopen_s(&ISOFileOut, szISOFileName, "wb") == 0) {
+    ISOFileOut = fopen(szISOFileName, "wb");
+    if ( ISOFileOut != nullptr ) {
 
         // Output overview to create 1 file within a CDFS ISO
         // Block 0 - Write system area.
@@ -170,18 +173,18 @@ bool ISOCreatorCDFS::CreateSingleFileISO(const char * szISOFileName, const char 
         memset(VolDesc.VolumeIdentifier, 0x20, 32);
         memcpy(VolDesc.VolumeIdentifier, szVolumeLabel, strlen(szVolumeLabel));
         VolDesc.VolumeSpaceSizeLE = 26;
-        VolDesc.VolumeSpaceSizeBE = _byteswap_ulong(26);
+        VolDesc.VolumeSpaceSizeBE = __builtin_bswap32(26);
         VolDesc.VolumeSetSizeLE = 1;
-        VolDesc.VolumeSetSizeBE = _byteswap_ushort(1);
+        VolDesc.VolumeSetSizeBE = __builtin_bswap16(1);
         VolDesc.VolumeSequenceNumberLE = 1;
-        VolDesc.VolumeSequenceNumberBE = _byteswap_ushort(1);
+        VolDesc.VolumeSequenceNumberBE = __builtin_bswap16(1);
         VolDesc.LogicalBlockSizeLE = CDFS_LOGICAL_BLOCK_SIZE;
-        VolDesc.LogicalBlockSizeBE = _byteswap_ushort(CDFS_LOGICAL_BLOCK_SIZE);
+        VolDesc.LogicalBlockSizeBE = __builtin_bswap16(CDFS_LOGICAL_BLOCK_SIZE);
         VolDesc.PathTableSizeLE = 10;
-        VolDesc.PathTableSizeBE = _byteswap_ulong(10);
+        VolDesc.PathTableSizeBE = __builtin_bswap32(10);
         VolDesc.LPathTableLocationLE = 20;
         VolDesc.OptLPathTableLocationLE = 0;
-        VolDesc.MPathTableLocationBE = _byteswap_ulong(21);
+        VolDesc.MPathTableLocationBE = __builtin_bswap32(21);
         VolDesc.OptMPathTableLocationBE = 0;
         VolDesc.RootDirEntry[0] = 34;
         VolDesc.RootDirEntry[2] = 19;
@@ -227,7 +230,7 @@ bool ISOCreatorCDFS::CreateSingleFileISO(const char * szISOFileName, const char 
         VolDesc.Unused3[1] = 0x2F;
         VolDesc.Unused3[2] = 0x45;
         VolDesc.LPathTableLocationLE = 23;
-        VolDesc.MPathTableLocationBE = _byteswap_ulong(24);
+        VolDesc.MPathTableLocationBE = __builtin_bswap32(24);
         VolDesc.RootDirEntry[2] = 0x16;
         VolDesc.RootDirEntry[8] = 0x0;
         VolDesc.RootDirEntry[9] = 0x16;
@@ -276,7 +279,7 @@ bool ISOCreatorCDFS::CreateSingleFileISO(const char * szISOFileName, const char 
         fwrite(BlockBuffer, 1, 2040, ISOFileOut);
 
         // Logical block 21.
-        this->WriteVolumePathTable(ISOFileOut, 1, 0, _byteswap_ulong(19), _byteswap_ushort(1));
+        this->WriteVolumePathTable(ISOFileOut, 1, 0, __builtin_bswap32(19), __builtin_bswap16(1));
         fwrite(BlockBuffer, 1, 2040, ISOFileOut);
 
         // Logical block 22.
@@ -305,7 +308,7 @@ bool ISOCreatorCDFS::CreateSingleFileISO(const char * szISOFileName, const char 
         fwrite(BlockBuffer, 1, 2040, ISOFileOut);
 
         // Logical block 24.
-        this->WriteVolumePathTable(ISOFileOut, 1, 0, _byteswap_ulong(22), _byteswap_ushort(1));
+        this->WriteVolumePathTable(ISOFileOut, 1, 0, __builtin_bswap32(22), __builtin_bswap16(1));
         fwrite(BlockBuffer, 1, 2040, ISOFileOut);
 
         // Logical block 25, and the data from SampleFile.txt !

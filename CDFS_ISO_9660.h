@@ -1,5 +1,4 @@
-#ifndef CDFS_ISO_9660H
-#define CDFS_ISO_9660H
+#pragma once
 
 #include <cstdint>
 
@@ -130,5 +129,3 @@ inline void CharToWideCharBE(unsigned char * Dest, const char * Src, unsigned in
         CurPos++;
     }
 }
-
-#endif

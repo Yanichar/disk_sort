@@ -1,12 +1,11 @@
-#ifndef ISO_CREATOR_CDFS_H
-#define ISO_CREATOR_CDFS_H
+#pragma once
 
 #include <cstdint>
 #include <cstdio>
 #include <cstring>
 #include <stdlib.h>
 
-#include "CDFS_ISO.h"
+#include "CDFS_ISO_9660.h"
 
 class ISOCreatorCDFS {
 public:
@@ -25,5 +24,3 @@ public:
     static bool WriteVolumePathTable(FILE* ISOFileOut, uint8_t DirectoryIdentifier, uint8_t ExtAttrRecordLength, uint32_t LBALocation, uint16_t DirectoryParentNumber);
     static bool WriteVolumePathTable(FILE* ISOFileOut, struct CDFS_VOLUME_PATH_TABLE* pVolumePathTable);
 };
-
-#endif
